@@ -12,43 +12,27 @@ function UploadUser(){
         event.preventDefault();
         const data = new FormData();
         const fileInput = document.querySelector("#fileInput");
-        console.log(fileInput.files[0]);
 
         data.append('emplist', fileInput.files[0]);
-        console.log(data);
 
         fetch("http://localhost:5000/users/upload", {
-            // mode: 'no-cors',
             method: "POST",
             headers: {
-                //"Content-Type": "multipart/form-data",
                 "accept": "application/json",
-                //"type": "formData"
             },
             body: data 
             })
             .then((res) => {
-            console.log(res);
-            console.log(res.status);
-            //console.log(res.json());
             saveTestDataHandler(res.status);
             if (res.status == 200) {
-                //alert("Perfect! ");
                 saveTestDataHandler("Users successfully uploaded");
             } else if (res.status == 400) {
-                //res.json();
-                //alert("Invalid CSV file uploaded! ");
-                // console.log(res.json().then());
-                // console.log((res.json()))
-
                 res.json().then((data) => {
                     saveTestDataHandler(data["error"]);
                 })
-
             }
             }, function (e) {
-                saveTestDataHandler("Error submitting the form!");
-            //alert("Error submitting form!");
+                saveTestDataHandler("Error submitting the form! Please try refreshing and reuploading file");
             });
         };
 

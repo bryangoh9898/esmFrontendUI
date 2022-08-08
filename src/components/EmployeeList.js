@@ -7,13 +7,12 @@ import Card from '../UI/Card';
 
 function EmployeeList(){
 
-    const [inputValue, setValue] = useState('');
+    const [users, setUsers] = useState([]);
     const [selectedValue, setSelectedValue] = useState(null);
+    const [selectedSortValue, setSelectedSortValue] = useState(null);
     const [inputMinValue, setInputMinvalue] = useState('');
     const [inputMaxValue, setInputMaxValue] = useState('');
-    const [selectedSortValue, setSelectedSortValue] = useState(null);
-    const [currentPageValue, setCurrentPageValue] = useState(0);
-    const [users, setUsers] = useState([]);
+    const [inputValue, setValue] = useState('');
     const [userCount, setUserCount] = useState(0);
     const [pageCount, setPageCount] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
@@ -36,9 +35,6 @@ function EmployeeList(){
         setUsers(value);
     }
 
-    const handleCurrentPageValue = value => {
-        setCurrentPageValue(value);
-    }
 
     const handleSortChange = value => {
         setSelectedSortValue(value);
@@ -63,72 +59,62 @@ function EmployeeList(){
     const handleInputMaxChange = event => {
         setInputMaxValue(event.target.value);
     }
+    
+    const [test, setTests] = useState("");
+
+    const saveTestDataHandler = (enteredNewTestData) =>{
+        setTests(enteredNewTestData);
+    }
 
     const [reducer, forceUpdate] = useReducer( x => x+1,0)
 
-    useEffect(() =>{
-    }, [reducer])
+    useEffect(() =>{}, [reducer])
 
     const handlePageClick = (e) => {
-        console.log("ran")
         var url = "http://localhost:5000/users?minSalary=" + inputMinValue + "&maxSalary=" +
         inputMaxValue + "&offset=" +  (e.selected) * numRecordForPage + "&limit=30&sort=" + encodeURIComponent(selectedSortValue["label"])+ selectedValue["label"].toLowerCase()
-        console.log(
-            `User requested page number ${e.selected}, which is offset ${(e.selected) *numRecordForPage}`
-          );
+        // console.log(
+        //     `User requested page number ${e.selected}, which is offset ${(e.selected) *numRecordForPage}`
+        //   );
         fetch(url, {
             method: "GET",
             headers: {
                 "accept": "application/json",
             },
-            })
-            .then((res) => {
+        })
+        .then((res) => {
             console.log(res);
             console.log(res.status);
-            //console.log(res.json());
             if (res.status == 200) {
                 alert("Perfect! ");
             } else if (res.status == 400) {
-                //res.json();
                 alert("Invalid Input, please enter eveyrthing");
-                // console.log(res.json().then());
-                // console.log((res.json()))
-                // res.json().then((data) => {
-                //     //saveTestDataHandler(data["error"]);
-                // })
             }
             return res.json()
             }, function (e) {
                 alert("Error submitting form!");
-            })
-            .then(data => {
+        })
+        .then(data => {
                 setIsLoading(false)
                 handleUser(data)
-                handleCurrentPageValue(e.selected)
-            });
-            
-
+        });
     };
 
     function submitHandler(){
-        console.log(inputMinValue);
-        console.log(inputMaxValue);
-        console.log(JSON.stringify(selectedValue || {} , null))
-        //Make the URL here
-        
+    
         if(selectedSortValue == null || selectedValue == null || inputMinValue == null || inputMaxValue == null){
-            alert("Pleaes select all fields")
+            alert("Please select all fields")
             return
         }
 
+        //Make the URL here
         var url = "http://localhost:5000/users?minSalary=" + inputMinValue + "&maxSalary=" +
         inputMaxValue + "&offset=0&limit=30&sort=" + encodeURIComponent(selectedSortValue["label"])+ selectedValue["label"].toLowerCase()
-        console.log(encodeURIComponent(selectedSortValue["label"]))
-        console.log(url); 
+
         //Call the api now 
         setIsLoading(true)
 
-        //Fetch num of count
+        //Fetch num of total document count (Without filter)
         fetch("http://localhost:5000/users/employeeRecords/count", {
             method: "GET"
         })
@@ -136,49 +122,39 @@ function EmployeeList(){
             console.log(res);
             return res.json();
         }).then(data => {
-            console.log("DEBUGGING")
-            console.log(data);
-            console.log(Math.ceil(data/numRecordForPage))
             handleUserCount(data);
             handlePageCount(Math.ceil(data/numRecordForPage))
             //We want to refressh tthe Component
             forceUpdate()
-            alert(userCount);
-            alert(pageCount);
         })
 
+        //Fetch the relevant data
         fetch(url, {
             method: "GET",
             headers: {
                 "accept": "application/json",
             },
-            })
-            .then((res) => {
+        })
+        .then((res) => {
             console.log(res);
             console.log(res.status);
-            //console.log(res.json());
             if (res.status == 200) {
                 alert("Perfect! ");
             } else if (res.status == 400) {
-                //res.json();
-                alert("Invalid CSV file uploaded! ");
-                // console.log(res.json().then());
-                // console.log((res.json()))
-                // res.json().then((data) => {
-                //     //saveTestDataHandler(data["error"]);
-                // })
+                res.json().then((data) => {
+                    saveTestDataHandler(data["error"]);
+                    return {}
+                })
             }
             return res.json()
             }, function (e) {
                 alert("Error submitting form!");
-            })
-            .then(data => {
+        })
+        .then(data => {
                 setIsLoading(false)
                 handleUser(data)
-            });
-
-        };
-
+        });
+    };
     
     return(
         <div className = "container">
@@ -204,7 +180,7 @@ function EmployeeList(){
                 <button style = {{padding : "7px" , borderRadius: "4px", border: "1px solid lightgrey" , fontSize : "1rem", marginLeft: "15px"}}onClick={submitHandler}>Search</button>
             </div>
   
-            <ul className = "vertical-wapper">
+            <ul className = "vertical-wrapper">
                 <li>
                 <Card className = "header">
                     <div className = "column-wrapper">ID</div>
@@ -238,9 +214,6 @@ function EmployeeList(){
                 <br/>
                 <br/>
             </ul>
-
-       
-
         </div>
     )
 }
