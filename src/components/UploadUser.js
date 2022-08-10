@@ -3,6 +3,7 @@ import "./UploadUser.css"
 function UploadUser(){
 
     const [test, setTests] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const saveTestDataHandler = (enteredNewTestData) =>{
         setTests(enteredNewTestData);
@@ -14,7 +15,7 @@ function UploadUser(){
         const fileInput = document.querySelector("#fileInput");
 
         data.append('emplist', fileInput.files[0]);
-
+        setIsLoading(true);
         fetch("http://localhost:5000/users/upload", {
             method: "POST",
             headers: {
@@ -24,6 +25,7 @@ function UploadUser(){
             })
             .then((res) => {
             saveTestDataHandler(res.status);
+            setIsLoading(false);
             if (res.status == 200) {
                 saveTestDataHandler("Users successfully uploaded");
             } else if (res.status == 400) {
@@ -37,11 +39,14 @@ function UploadUser(){
         };
 
     return(
-        <div class = "container">
+        <div className = "container">
         <form  onSubmit= {submitHandler} encType = "multipart/form-data">
         <input type = "file" name = "emplist"  accept=".csv" id = "fileInput" required></input>
         <input type= "submit" value = "upload"></input>
         <p>Upload Status: </p>
+        { isLoading && (
+            <p>Loading...</p>
+        )}
         <p>{test} </p>
         </form>
         </div>
