@@ -111,6 +111,25 @@ function EmployeeList(){
             return
         }
 
+        if(inputMinValue < 0 && inputMaxValue < 0 ){
+            alert("Min & Max Salary Cannot be Negative")
+            return
+        }
+        else if(inputMaxValue < 0){
+            alert("Max Salary Cannot be Negative")
+            return
+        }
+        else if(inputMinValue < 0){
+            alert("Min Salary Cannot be Negative")
+            return
+        }
+        else{
+            if(inputMinValue > inputMaxValue){
+                alert("Min Value Cannot be more than Negative")
+                return
+            }
+        }
+
         //Call the api now - Show user loading 
         setIsLoading(true)
 
