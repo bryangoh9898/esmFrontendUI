@@ -53,7 +53,11 @@ function EmployeeItem(props){
           togglePop()
         }
         else{
-          console.log("Error in updating")
+          //console.log(res.json())
+          //I want to show error msg
+          res.json().then((data) => {
+            alert(data["error"])
+          })
         }
     })
 
