@@ -16,7 +16,8 @@ function EmployeeList(){
     const [userCount, setUserCount] = useState(0);
     const [pageCount, setPageCount] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
-
+    const [currentActivePage, setCurrentActivePage] = useState(-1);
+    const [emptyResult, setEmptyResult] = useState(null);
     const numRecordForPage = 30;
 
     const actions = [
@@ -31,10 +32,17 @@ function EmployeeList(){
         {label: "-", value: 2}
     ]
 
+    const handleEmptyResult = value => {
+        setEmptyResult(value);
+    }
+
     const handleUser = value => {
         setUsers(value);
     }
 
+    const handleCurrentActivePage = value => {
+        setCurrentActivePage(value);
+    }
 
     const handleSortChange = value => {
         setSelectedSortValue(value);
@@ -66,16 +74,15 @@ function EmployeeList(){
         setTests(enteredNewTestData);
     }
 
-    const [reducer, forceUpdate] = useReducer( x => x+1,0)
 
-    useEffect(() =>{}, [reducer])
-
-    const handlePageClick = (e) => {
+    const handlePageClick = (e) => {    
         var url = "http://localhost:5000/users?minSalary=" + inputMinValue + "&maxSalary=" +
         inputMaxValue + "&offset=" +  (e.selected) * numRecordForPage + "&limit=30&sort=" + encodeURIComponent(selectedSortValue["label"])+ selectedValue["label"].toLowerCase()
         // console.log(
         //     `User requested page number ${e.selected}, which is offset ${(e.selected) *numRecordForPage}`
         //   );
+        handleCurrentActivePage(e.selected)
+
         fetch(url, {
             method: "GET",
             headers: {
@@ -85,10 +92,8 @@ function EmployeeList(){
         .then((res) => {
             console.log(res);
             console.log(res.status);
-            if (res.status == 200) {
-                alert("Perfect! ");
-            } else if (res.status == 400) {
-                alert("Invalid Input, please enter eveyrthing");
+            if (res.status == 400) {
+                alert("Invalid Input");
             }
             return res.json()
             }, function (e) {
@@ -101,8 +106,8 @@ function EmployeeList(){
     };
 
     function submitHandler(){
-    
-        if(selectedSortValue == null || selectedValue == null || inputMinValue == null || inputMaxValue == null){
+
+        if(selectedSortValue == null || selectedValue == null || inputMinValue == '' || inputMaxValue == ''){
             alert("Please select all fields")
             return
         }
@@ -115,17 +120,18 @@ function EmployeeList(){
         setIsLoading(true)
 
         //Fetch num of total document count (Without filter)
-        fetch("http://localhost:5000/users/employeeRecords/count", {
-            method: "GET"
+        fetch("http://localhost:5000/users/employeeRecords/count?maxSalary=" + inputMaxValue + "&minSalary=" + inputMinValue , {
+            method: "GET",
         })
         .then((res) =>{
             console.log(res);
             return res.json();
         }).then(data => {
             handleUserCount(data);
-            handlePageCount(Math.ceil(data/numRecordForPage))
-            //We want to refressh tthe Component
-            forceUpdate()
+            handlePageCount(Math.ceil(data/numRecordForPage));
+            //We want to refressh the pagination
+            handleCurrentActivePage(0)
+            console.log(currentActivePage)
         })
 
         //Fetch the relevant data
@@ -138,9 +144,7 @@ function EmployeeList(){
         .then((res) => {
             console.log(res);
             console.log(res.status);
-            if (res.status == 200) {
-                alert("Perfect! ");
-            } else if (res.status == 400) {
+            if(res.status == 400) {
                 res.json().then((data) => {
                     saveTestDataHandler(data["error"]);
                     return {}
@@ -151,8 +155,18 @@ function EmployeeList(){
                 alert("Error submitting form!");
         })
         .then(data => {
+                //If not result, then we want to display message
                 setIsLoading(false)
+                
+                if(data.length > 0){
+                    handleEmptyResult(false)
+                }
+                else{
+                    handleEmptyResult(true)
+                }
+                
                 handleUser(data)
+
         });
     };
     
@@ -169,17 +183,18 @@ function EmployeeList(){
                 </div>
             </div>
             
-            <div className = "dd-wrapper" style={{display: "flex", marginRight: "20%"}}>
-                <label className = "field-wrapper">Sort By:</label>
+        
+            <div className = "dd-wrapper-fix">
+                <label className = "field-wrapper">Sort:</label>
                 <div className = "filter-wrapper">
                 <Select options = {actions} value = {selectedValue} onChange = {handleChange} isLoading={isLoading}></Select>
                 </div>
-                <div>
+                <div className = "sort-wrapper">
                 <Select options = {sortActions} value = {selectedSortValue}  onChange = {handleSortChange} isLoading={isLoading}></Select>
                 </div>
                 <button style = {{padding : "7px" , borderRadius: "4px", border: "1px solid lightgrey" , fontSize : "1rem", marginLeft: "15px"}}onClick={submitHandler}>Search</button>
-            </div>
-  
+            </div>  
+
             <ul className = "vertical-wrapper">
                 <li>
                 <Card className = "header">
@@ -187,14 +202,23 @@ function EmployeeList(){
                     <div className = "column-wrapper">LOGIN</div>
                     <div className = "column-wrapper">NAME</div>
                     <div className = "column-wrapper">SALARY</div>
-                    <div className = "column-wrapper">Action Icon</div>
+                    <div className = "column-wrapper">ACTION</div>
                 </Card>
                 </li>
-                {
+                {       
                     users.map(user => (
-                        <EmployeeItem key = {user.id} id = {user.id} login = {user.login} name = {user.name} salary = {user.salary}></EmployeeItem>
+                        <EmployeeItem key = {user.id} id = {user.id} login = {user.login} name = {user.name} salary = {user.salary} submitHandler = {submitHandler}></EmployeeItem>
                     ))
                 }
+                
+                { isLoading && (
+                    <div>Loading...</div>
+                )}
+
+                { emptyResult && (
+                <div>No results found!</div>
+                )}  
+
                 <li>
                 <br/>
                 <ReactPaginate
@@ -209,11 +233,15 @@ function EmployeeList(){
                     containerClassName={"pagination"}
                     subContainerClassName={"pages pagination"}
                     renderOnZeroPageCount={null}
+                    forcePage={currentActivePage}
                     activeClassName={"active"}/>
                 </li>
                 <br/>
                 <br/>
             </ul>
+        
+
+
         </div>
     )
 }
