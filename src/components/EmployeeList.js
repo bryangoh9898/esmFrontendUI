@@ -74,10 +74,10 @@ function EmployeeList(){
         setTests(enteredNewTestData);
     }
 
-
+    //Retrieves the paginated pages employee records from database
     const handlePageClick = (e) => {    
         var url = "http://localhost:5000/users?minSalary=" + inputMinValue + "&maxSalary=" +
-        inputMaxValue + "&offset=" +  (e.selected) * numRecordForPage + "&limit=30&sort=" + encodeURIComponent(selectedSortValue["label"])+ selectedValue["label"].toLowerCase()
+        inputMaxValue + "&offset=" +  (e.selected) * numRecordForPage + "&limit=" + numRecordForPage+ "&sort=" + encodeURIComponent(selectedSortValue["label"])+ selectedValue["label"].toLowerCase()
         // console.log(
         //     `User requested page number ${e.selected}, which is offset ${(e.selected) *numRecordForPage}`
         //   );
@@ -90,8 +90,6 @@ function EmployeeList(){
             },
         })
         .then((res) => {
-            console.log(res);
-            console.log(res.status);
             if (res.status == 400) {
                 alert("Invalid Input");
             }
@@ -105,6 +103,7 @@ function EmployeeList(){
         });
     };
 
+    //Searches and return first page of user search
     function submitHandler(){
 
         if(selectedSortValue == null || selectedValue == null || inputMinValue == '' || inputMaxValue == ''){
@@ -112,28 +111,25 @@ function EmployeeList(){
             return
         }
 
-        //Make the URL here
-        var url = "http://localhost:5000/users?minSalary=" + inputMinValue + "&maxSalary=" +
-        inputMaxValue + "&offset=0&limit=30&sort=" + encodeURIComponent(selectedSortValue["label"])+ selectedValue["label"].toLowerCase()
-
-        //Call the api now 
+        //Call the api now - Show user loading 
         setIsLoading(true)
 
-        //Fetch num of total document count (Without filter)
+        //Fetch num of total document count - To determine how many pages for tthe reult to use in pagination
         fetch("http://localhost:5000/users/employeeRecords/count?maxSalary=" + inputMaxValue + "&minSalary=" + inputMinValue , {
             method: "GET",
         })
         .then((res) =>{
-            console.log(res);
             return res.json();
         }).then(data => {
             handleUserCount(data);
             handlePageCount(Math.ceil(data/numRecordForPage));
             //We want to refressh the pagination
             handleCurrentActivePage(0)
-            console.log(currentActivePage)
         })
 
+        //Make the URL here
+        var url = "http://localhost:5000/users?minSalary=" + inputMinValue + "&maxSalary=" +
+        inputMaxValue + "&offset=0&limit=" + numRecordForPage + "&sort=" + encodeURIComponent(selectedSortValue["label"])+ selectedValue["label"].toLowerCase()
         //Fetch the relevant data
         fetch(url, {
             method: "GET",
@@ -142,8 +138,6 @@ function EmployeeList(){
             },
         })
         .then((res) => {
-            console.log(res);
-            console.log(res.status);
             if(res.status == 400) {
                 res.json().then((data) => {
                     saveTestDataHandler(data["error"]);

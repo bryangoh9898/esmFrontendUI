@@ -11,14 +11,11 @@ function EmployeeItem(props){
   const [popUp, setPopUp] = useState(false);
   const[deletePopUp, setDeletePopUp] = useState(false);
 
-  function deleteUser(){
-      //Fetch num of total document count (Without filter)
-    
+  function deleteUser(){    
     fetch("http://localhost:5000/users/" + props.id, {
         method: "DELETE"
     })
     .then((res) =>{
-        console.log(res);
         if(res.status == 200){
           console.log("Delete successful")
           props.submitHandler()
@@ -30,9 +27,9 @@ function EmployeeItem(props){
 
   }
 
+  //Calls the backend API to update a user info
   function updateUser(){
-
-    //Fill in everything please
+    //Ensure all essential field are filled up 
     if(inputName == "" || inputLogin == "" || inputSalary == ""){
       alert("Please enter all fields")
       return
@@ -50,14 +47,13 @@ function EmployeeItem(props){
         body: JSON.stringify(objBody)
     })
     .then((res) =>{
-        console.log(res);
         if(res.status == 200){
           console.log("Update successful")
           props.submitHandler()
           togglePop()
         }
         else{
-          console.log("Error in deleting")
+          console.log("Error in updating")
         }
     })
 
@@ -90,8 +86,6 @@ function EmployeeItem(props){
   else{
     document.body.classList.remove('active-popUp')
   }
-
-
 
    return(
     <li>
